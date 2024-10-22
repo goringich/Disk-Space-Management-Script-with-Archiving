@@ -1,10 +1,10 @@
 @echo off
 setlocal
-
+rmdir /S /Q "%LOG_DIR%"
+rmdir /S /Q "%BACKUP_DIR%"
 :: Папки и порог
 set LOG_DIR=.\log
 set BACKUP_DIR=.\backup
-set THRESHOLD=10
 
 :: Создание папки логов, если её нет
 if not exist "%LOG_DIR%" (
@@ -14,60 +14,106 @@ if not exist "%LOG_DIR%" (
   echo Папка для логов уже существует: %LOG_DIR%
 )
 
-:: Генерация файлов для тестов (создаю минимум 50 GB)
-echo Создаю тестовые файлы на 50 GB...
+:: Очистка папки логов перед созданием тестовых файлов
+echo Очищаю папку логов от старых файлов...
+del /q "%LOG_DIR%\*"
+
+:: Генерация файлов для тестов (создаю минимум 5000 Мб)
+echo Создаю тестовые файлы на 5000 Мб
 for /l %%i in (1,1,100) do (
-  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 524288000
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
   echo Файл test_file_%%i.log создан.
 )
 
 :: Тест 1: Порог 10%
 set THRESHOLD=10
-echo Тест 1: Порог в 10%
-call script.bat "%LOG_DIR%" "%BACKUP_DIR%" %THRESHOLD%
+echo Тест 1: Порог в %THRESHOLD%%
+call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\10"
 
-if exist "%BACKUP_DIR%\test_file_1.log" (
-  echo Тест 1 не пройден: Файлы были архивированы при пороге 10%
+if exist "%BACKUP_DIR%\10\backup_*.tar.gz" (
+  echo Тест 1 не пройден: Файлы были архивированы при пороге %THRESHOLD%%
 ) else (
   echo Тест 1 пройден: Архивация не выполнялась
 )
 
+
+
+
+:: Очистка папки логов перед созданием тестовых файлов
+echo Очищаю папку логов от старых файлов...
+del /q "%LOG_DIR%\*"
+
+:: Генерация файлов для тестов (создаю минимум 5000 Мб)
+echo Создаю тестовые файлы на 5000 Мб
+for /l %%i in (1,1,100) do (
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  echo Файл test_file_%%i.log создан.
+)
+
 :: Тест 2: Порог 1%
 set THRESHOLD=1
-echo Тест 2: Порог в 1%
-call script.bat "%LOG_DIR%" "%BACKUP_DIR%" %THRESHOLD%
+echo Тест 2: Порог в %THRESHOLD%%
+call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\1"
 
-if exist "%BACKUP_DIR%\test_file_1.log" (
+if exist "%BACKUP_DIR%\1\backup_*.tar.gz" (
   echo Тест 2 пройден: Файлы были успешно архивированы
 ) else (
   echo Тест 2 не пройден: Архивация не была выполнена
 )
 
+
+
+
+
+:: Очистка папки логов перед созданием тестовых файлов
+echo Очищаю папку логов от старых файлов...
+del /q "%LOG_DIR%\*"
+
+:: Генерация файлов для тестов (создаю минимум 5000 Мб)
+echo Создаю тестовые файлы на 5000 Мб
+for /l %%i in (1,1,100) do (
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  echo Файл test_file_%%i.log создан.
+)
+
 :: Тест 3: Порог 5%
 set THRESHOLD=5
-echo Тест 3: Порог в 5%
-call script.bat "%LOG_DIR%" "%BACKUP_DIR%" %THRESHOLD%
+echo Тест 3: Порог в %THRESHOLD%%
+call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\5"
 
-if exist "%BACKUP_DIR%\test_file_10.log" (
-  echo Тест 3 пройден: Часть файлов была успешно архивирована
+if exist "%BACKUP_DIR%\5\backup_*.tar.gz" (
+  echo Тест 3 пройден: Файлы были успешно архивированы
 ) else (
   echo Тест 3 не пройден: Архивация не была выполнена
 )
 
+
+
+:: Очистка папки логов перед созданием тестовых файлов
+echo Очищаю папку логов от старых файлов...
+del /q "%LOG_DIR%\*"
+
+:: Генерация файлов для тестов (создаю минимум 5000 Мб)
+echo Создаю тестовые файлы на 5000 Мб
+for /l %%i in (1,1,100) do (
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  echo Файл test_file_%%i.log создан.
+)
+
 :: Тест 4: Порог 50%
 set THRESHOLD=50
-echo Тест 4: Порог в 50%
-call script.bat "%LOG_DIR%" "%BACKUP_DIR%" %THRESHOLD%
+echo Тест 4: Порог в %THRESHOLD%%
+call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\50"
 
-if exist "%BACKUP_DIR%\test_file_20.log" (
-  echo Тест 4 не пройден: Файлы были архивированы при пороге 50%
+if exist "%BACKUP_DIR%\50\backup_*.tar.gz" (
+  echo Тест 4 не пройден: Файлы были архивированы при пороге %THRESHOLD%%
 ) else (
   echo Тест 4 пройден: Архивация не выполнялась
 )
 
 :: Очистка данных после тестов
-rmdir /S /Q "%LOG_DIR%"
-@REM rmdir /S /Q "%BACKUP_DIR%"
+::rmdir /S /Q "%LOG_DIR%"
+::rmdir /S /Q "%BACKUP_DIR%"
 
 echo Тестирование завершено.
 endlocal

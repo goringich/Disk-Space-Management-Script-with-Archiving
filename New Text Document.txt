@@ -1,2 +1,0 @@
-cd C:\Users\user\Desktop\study\arch_lab\test
-test_script.bat "C:\Users\user\Desktop\study\arch_lab\test\log" "C:\Users\user\Desktop\study\arch_lab\test\backup"

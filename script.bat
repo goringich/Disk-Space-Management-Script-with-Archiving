@@ -7,78 +7,90 @@ set "LOG_DIR=%~1"
 set "THRESHOLD=%~2"
 set "BACKUP_DIR=%~3"
 
-:: Преобразуем относительный путь в абсолютный
-for %%i in (%LOG_DIR%) do set "LOG_DIR=%%~fi"
-for %%i in (%BACKUP_DIR%) do set "BACKUP_DIR=%%~fi"
+echo Папка для логов: "%LOG_DIR%"
+echo Порог заполненности: "%THRESHOLD%%"
 
-echo Папка для логов: %LOG_DIR%
-echo Порог заполненности: %THRESHOLD%%
-echo Папка для бэкапов: %BACKUP_DIR%
+:: Преобразуем относительный путь в абсолютный
+for %%i in ("%LOG_DIR%") do set "LOG_DIR=%%~fi"
+for %%i in ("%BACKUP_DIR%") do set "BACKUP_DIR=%%~fi"
+
+echo Преобразованный путь к папке логов: "%LOG_DIR%"
+
+set "MAX_LOG_SIZE_GB=1"
+set /a MAX_LOG_SIZE_MB=%MAX_LOG_SIZE_GB%*1024
+echo Максимальный размер папки логов (MB): "%MAX_LOG_SIZE_MB%"
 
 :: Проверка существования папки для бэкапов
 if not exist "%BACKUP_DIR%" (
-  echo Папка для бэкапов не существует. Создаю...
-  mkdir "%BACKUP_DIR%"
-  if exist "%BACKUP_DIR%" (
-    echo Папка для бэкапов успешно создана.
-  ) else (
-    echo Не удалось создать папку для бэкапов.
-    exit /b 1
-  )
+    echo Папка для бэкапов не существует. Создаю...
+    mkdir "%BACKUP_DIR%"
+    if exist "%BACKUP_DIR%" (
+        echo Папка для бэкапов успешно создана.
+    ) else (
+        echo Не удалось создать папку для бэкапов.
+        exit /b 1
+    )
 ) else (
-  echo Папка для бэкапов уже существует.
+    echo Папка для бэкапов уже существует.
 )
 
-:: Получаем диск, на котором находится LOG_DIR
-set "DRIVE_LETTER=%LOG_DIR:~0,2%"
-echo Диск: %DRIVE_LETTER%
+:: Получаем размер папки LOG_DIR в MB с корректным форматированием
+for /f %%a in ('powershell -NoProfile -Command "$sizeMB = (Get-ChildItem -Path """"%LOG_DIR%"""" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB; [math]::Round($sizeMB, 2)"') do set "LOG_SIZE_MB=%%a"
 
-:: Получаем общий размер диска и сразу конвертируем в GB
-for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "(Get-PSDrive -Name %DRIVE_LETTER:~0,1%).Used / 1GB + (Get-PSDrive -Name %DRIVE_LETTER:~0,1%).Free / 1GB"`) do (
-  set "TOTAL_SPACE_GB=%%a"
-)
+:: Удаляем возможные нечисловые символы
+::for /f "tokens=* delims=" %%a in ("!LOG_SIZE_MB!") do set "LOG_SIZE_MB=%%a"
 
-:: Получаем размер папки LOG_DIR в GB
-for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "(Get-ChildItem -Path '%LOG_DIR%' -Recurse | Measure-Object -Property Length -Sum).Sum / 1GB"`) do (
-  set "FOLDER_SIZE_GB=%%a"
-)
+echo Размер папки логов (MB): "!LOG_SIZE_MB!"
 
-:: Проверяем, что TOTAL_SPACE_GB корректен
-if "!TOTAL_SPACE_GB!"=="" (
-  echo Ошибка: Не удалось получить общий размер диска.
-  exit /b 1
-)
+:: Вычисляем процент использования с помощью PowerShell
+for /f %%a in ('powershell -NoProfile -Command "[System.Globalization.CultureInfo]::InvariantCulture; [math]::Round((%LOG_SIZE_MB% / %MAX_LOG_SIZE_MB%) * 100, 2)"') do set "PERCENT_USED=%%a"
+echo Использование папки логов: "!PERCENT_USED!%%"
 
-:: Проверяем, что FOLDER_SIZE_GB корректен
-if "!FOLDER_SIZE_GB!"=="" (
-  set "FOLDER_SIZE_GB=0"
-)
+:: Извлекаем целую часть процента для сравнения
+for /f "delims=.," %%a in ("!PERCENT_USED!") do set "PERCENT_INT=%%a"
 
-echo Общий размер диска (GB): !TOTAL_SPACE_GB!
-echo Размер папки (GB): !FOLDER_SIZE_GB!
+echo Целая часть использования: "!PERCENT_INT!%%"
 
-:: Вычисляем процент использования вручную (не через PowerShell)
-set /a PERCENT_USED=(!FOLDER_SIZE_GB! * 100) / !TOTAL_SPACE_GB!
-
-echo Использование папки: !PERCENT_USED!%%
 
 :: Проверка превышения порога
-if !PERCENT_USED! LSS %THRESHOLD% (
-  echo Заполнение папки меньше порога. Архивация не требуется.
+if !PERCENT_INT! LSS %THRESHOLD% (
+    echo Заполнение папки меньше порога. Архивация не требуется.
 ) else (
-  echo Заполнение папки превышает порог. Необходима архивация.
+    echo Заполнение папки превышает порог. Необходима архивация.
 
-  :: Архивируем N самых старых файлов
-  set "N=5"
+    :: Создаем метку времени для имени архива
+    for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmmss"') do set "TIMESTAMP=%%a"
+    set "ARCHIVE_NAME=%BACKUP_DIR%\backup_%TIMESTAMP%.tar.gz"
 
-  for /f "delims=" %%a in ('dir /b /a-d /o:d "%LOG_DIR%"') do (
-    if !N! GTR 0 (
-      echo Архивируем файл: %%a
-      copy "%LOG_DIR%\%%a" "%BACKUP_DIR%\"
-      del "%LOG_DIR%\%%a"
-      set /a N-=1
+    echo Создание архива: "%ARCHIVE_NAME%"
+
+    :: Путь к 7z.exe (проверьте, что путь корректен)
+    set "SEVEN_ZIP_PATH=C:\Program Files\7-Zip\7z.exe"
+
+    :: Проверяем, что 7z.exe существует
+    ::if not exist "%SEVEN_ZIP_PATH%" (
+    ::     echo Ошибка: 7z.exe не найден по пути "%SEVEN_ZIP_PATH%".
+    ::     echo Проверьте правильность пути к 7z.exe и измените переменную SEVEN_ZIP_PATH в скрипте.
+    ::     exit /b 1
+    :: )
+
+    :: Создаем tar архив
+    "%SEVEN_ZIP_PATH%" a -ttar "%BACKUP_DIR%\backup_%TIMESTAMP%.tar" "%LOG_DIR%\*"
+
+    :: Сжимаем tar архив в gz
+    "%SEVEN_ZIP_PATH%" a -tgzip "%ARCHIVE_NAME%" "%BACKUP_DIR%\backup_%TIMESTAMP%.tar"
+
+    :: Удаляем временный tar файл
+    del "%BACKUP_DIR%\backup_%TIMESTAMP%.tar"
+
+    :: Проверяем, что архив создан
+    if exist "%ARCHIVE_NAME%" (
+        echo Архив успешно создан. Удаление файлов из "%LOG_DIR%"
+        del /q "%LOG_DIR%\*"
+    ) else (
+        echo Не удалось создать архив.
+        exit /b 1
     )
-  )
 )
 
 echo Скрипт выполнен успешно.
