@@ -41,7 +41,7 @@ if not exist "%BACKUP_DIR%" (
 )
 
 :: Получаем размер папки LOG_DIR в байтах (рекурсивно)
-for /f %%a in ('powershell -NoProfile -Command "(Get-ChildItem -Path '%LOG_DIR%' -Recurse -File | Measure-Object -Property Length -Sum).Sum"') do set "CURRENT_FOLDER_SIZE=%%a"
+for /f %%a in ('powershell -NoProfile -Command "(Get-ChildItem -Path ''%LOG_DIR%'' -Recurse -File | Measure-Object -Property Length -Sum).Sum"') do set "CURRENT_FOLDER_SIZE=%%a"
 
 :: Проверка превышения порога
 if !CURRENT_FOLDER_SIZE! LSS !THRESHOLD_BYTES! (
@@ -62,19 +62,18 @@ if !CURRENT_FOLDER_SIZE! LSS !THRESHOLD_BYTES! (
         :: Проверяем, нужно ли продолжать накопление
         if !SIZE_ACCUMULATED! LSS !THRESHOLD_BYTES! (
             :: Добавляем файл в список файлов для сохранения
-            set "FILES_TO_KEEP=!FILES_TO_KEEP! "%%F""
+            set "FILES_TO_KEEP=!FILES_TO_KEEP! %%F"
             set /a "SIZE_ACCUMULATED+=FILE_SIZE"
         ) else (
-            :: Достигли порога, выходим из цикла
             goto :DETERMINE_FILES_TO_ARCHIVE
         )
     )
 
-    :DETERMINE_FILES_TO_ARCHIVE
     :: Получаем список всех файлов в LOG_DIR
+    :DETERMINE_FILES_TO_ARCHIVE
     set "ALL_FILES="
     for /f "delims=" %%F in ('dir /s /b /a:-d "%LOG_DIR%\*"') do (
-        set "ALL_FILES=!ALL_FILES! "%%F""
+        set "ALL_FILES=!ALL_FILES! %%F"
     )
 
     :: Инициализируем список файлов для архивирования
@@ -84,10 +83,10 @@ if !CURRENT_FOLDER_SIZE! LSS !THRESHOLD_BYTES! (
     for %%F in (!ALL_FILES!) do (
         set "FOUND=0"
         for %%K in (!FILES_TO_KEEP!) do (
-            if "%%~F"=="%%~K" set "FOUND=1"
+            if "%%F"=="%%K" set "FOUND=1"
         )
         if "!FOUND!"=="0" (
-            set "FILES_TO_ARCHIVE=!FILES_TO_ARCHIVE! "%%F""
+            set "FILES_TO_ARCHIVE=!FILES_TO_ARCHIVE! %%F"
         )
     )
 
@@ -96,15 +95,17 @@ if !CURRENT_FOLDER_SIZE! LSS !THRESHOLD_BYTES! (
         exit /b 0
     )
 
+    @REM %RESTIC_PATH% backup "!FILES_TO_ARCHIVE!" --repo "%BACKUP_DIR%" --tag "%ARCHIVE_NAME%"
+
     :: Логирование файлов, которые будут архивироваться
     echo Архивируемые файлы:
-    for %%a in (!FILES_TO_ARCHIVE!) do echo "%%~a"
+    for %%a in (!FILES_TO_ARCHIVE!) do echo "%%a"
 
     :: Архивирование файлов
     for %%a in (!FILES_TO_ARCHIVE!) do (
-        echo Архивируем файл: "%%~a"
-        copy "%%~a" "%BACKUP_DIR%\" >nul
-        if exist "%%~a" del "%%~a"
+        echo Архивируем файл: "%%a"
+        copy "%%a" "%BACKUP_DIR%\" >nul
+        if exist "%%a" del "%%a"
     )
 
     echo Архив успешно создан. Файлы перенесены в "%BACKUP_DIR%"

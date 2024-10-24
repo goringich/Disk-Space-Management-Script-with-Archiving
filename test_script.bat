@@ -19,9 +19,9 @@ echo Очищаю папку логов от старых файлов...
 del /q "%LOG_DIR%\*"
 
 :: Генерация файлов для тестов (создаю минимум 5000 Мб)
-echo Создаю тестовые файлы на 5000 Мб
+echo Создаю тестовые файлы на 2000 Мб
 for /l %%i in (1,1,100) do (
-  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 22428800 >nul
   echo Файл test_file_%%i.log создан.
 )
 
@@ -44,9 +44,9 @@ echo Очищаю папку логов от старых файлов...
 del /q "%LOG_DIR%\*"
 
 :: Генерация файлов для тестов (создаю минимум 5000 Мб)
-echo Создаю тестовые файлы на 5000 Мб
+echo Создаю тестовые файлы на 2000 Мб
 for /l %%i in (1,1,100) do (
-  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 22428800 >nul
   echo Файл test_file_%%i.log создан.
 )
 
@@ -70,9 +70,9 @@ echo Очищаю папку логов от старых файлов...
 del /q "%LOG_DIR%\*"
 
 :: Генерация файлов для тестов (создаю минимум 5000 Мб)
-echo Создаю тестовые файлы на 5000 Мб
+echo Создаю тестовые файлы на 2000 Мб
 for /l %%i in (1,1,100) do (
-  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 22428800 >nul
   echo Файл test_file_%%i.log создан.
 )
 
@@ -94,9 +94,9 @@ echo Очищаю папку логов от старых файлов...
 del /q "%LOG_DIR%\*"
 
 :: Генерация файлов для тестов (создаю минимум 5000 Мб)
-echo Создаю тестовые файлы на 5000 Мб
+echo Создаю тестовые файлы на 2000 Мб
 for /l %%i in (1,1,100) do (
-  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 52428800 >nul
+  fsutil file createnew "%LOG_DIR%\test_file_%%i.log" 22428800 >nul
   echo Файл test_file_%%i.log создан.
 )
 
