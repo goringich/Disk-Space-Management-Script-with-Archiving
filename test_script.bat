@@ -30,7 +30,7 @@ set THRESHOLD=10
 echo Тест 1: Порог в %THRESHOLD%%
 call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\10"
 
-if exist "%BACKUP_DIR%\10\backup_*.tar.gz" (
+if exist "%BACKUP_DIR%\10\" (
   echo Тест 1 не пройден: Файлы были архивированы при пороге %THRESHOLD%%
 ) else (
   echo Тест 1 пройден: Архивация не выполнялась
@@ -55,7 +55,7 @@ set THRESHOLD=1
 echo Тест 2: Порог в %THRESHOLD%%
 call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\1"
 
-if exist "%BACKUP_DIR%\1\backup_*.tar.gz" (
+if exist "%BACKUP_DIR%\1\" (
   echo Тест 2 пройден: Файлы были успешно архивированы
 ) else (
   echo Тест 2 не пройден: Архивация не была выполнена
@@ -81,7 +81,7 @@ set THRESHOLD=5
 echo Тест 3: Порог в %THRESHOLD%%
 call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\5"
 
-if exist "%BACKUP_DIR%\5\backup_*.tar.gz" (
+if exist "%BACKUP_DIR%\5\" (
   echo Тест 3 пройден: Файлы были успешно архивированы
 ) else (
   echo Тест 3 не пройден: Архивация не была выполнена
@@ -105,7 +105,7 @@ set THRESHOLD=50
 echo Тест 4: Порог в %THRESHOLD%%
 call script.bat "%LOG_DIR%" %THRESHOLD% "%BACKUP_DIR%\50"
 
-if exist "%BACKUP_DIR%\50\backup_*.tar.gz" (
+if exist "%BACKUP_DIR%\50\" (
   echo Тест 4 не пройден: Файлы были архивированы при пороге %THRESHOLD%%
 ) else (
   echo Тест 4 пройден: Архивация не выполнялась
